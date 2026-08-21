@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Propriedades Globais -->
+    <property name="LOG_DIR" value="logs" />
+    <property name="LOG_FILE_NAME" value="biblioteca-api" />
+
+    <!-- Padrão do Log na Consola (Colorido e Detalhado) -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %logger{36} - %msg%n" />
+
+    <!-- Padrão do Log no Ficheiro (Sem cores, ideal para análise de arquivos/DevOps) -->
+    <property name="FILE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
+
+    <!-- 1. APPENDER: Consola (Terminal) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 2. APPENDER: Ficheiro com Rotação Automática (Rolling File) -->
+    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Ficheiro ativo atual onde os logs são escritos -->
+        <file>${LOG_DIR}/${LOG_FILE_NAME}.log</file>
+
+        <!-- Política de Rotação por Tamanho e Tempo (Diário + Max 10MB por ficheiro) -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Nome dos ficheiros compactados (.gz) rodados -->
+            <fileNamePattern>${LOG_DIR}/archived/${LOG_FILE_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+
+            <!-- Tamanho máximo de um único ficheiro antes de rotacionar -->
+            <maxFileSize>10MB</maxFileSize>
+
+            <!-- Mantém os ficheiros de log guardados por até 30 dias -->
+            <maxHistory>30</maxHistory>
+
+            <!-- Limite total de espaço em disco para o histórico de logs -->
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ===================================================================== -->
+    <!-- 3. SEPARAÇÃO DE LOGS POR AMBIENTE (springProfile)                     -->
+    <!-- ===================================================================== -->
+
+    <!-- AMBIENTE DE DESENVOLVIMENTO (dev) -->
+    <!-- Log na consola em nível DEBUG e apenas consola (para não poluir o disco local) -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+<!--            <appender-ref ref="ROLLING_FILE" />-->
+        </root>
+        <!-- Log mais detalhado do teu código de negócio no dev -->
+        <logger name="ao.com.laravel.biblioteca-api" level="DEBUG" />
+    </springProfile>
+
+    <!-- AMBIENTE DE HOMOLOGAÇÃO E PRODUÇÃO (hml, prod) -->
+    <!-- Grava na Consola E no Ficheiro com Rotação em nível INFO -->
+    <springProfile name="hml | prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="ROLLING_FILE" />
+        </root>
+
+        <!-- Opcional: Reduz o barulho do ecossistema Spring/Hibernate em Prod -->
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+    </springProfile>
+
+</configuration>

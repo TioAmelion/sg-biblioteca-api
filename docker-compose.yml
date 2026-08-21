@@ -1,0 +1,138 @@
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: biblioteca-mysql
+    restart: unless-stopped #se o docker reiniciar sobre a base de dados atomaticmnt..
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+    ports:
+      - "3306:3306"
+    volumes:
+      - "mysql_data:/var/lib/mysql" #sem volume, parou o container base dados apagada
+    networks:
+      - "biblioteca-network"
+
+    #profiles: #opcional em projetos pequenos
+     # - database
+
+    healthcheck:
+      test: [
+        "CMD",
+        "mysqladmin",
+        "ping",
+        "-h",
+        "localhost",
+        "-uroot",
+        "-proot"
+      ]
+      interval: 10s # pergunta a cada 10 segundos
+      timeout: 5s # considera
+      retries: 5 # tenta 5x
+      start_period: 30s # espera 30s antes de começar a testar
+
+  biblioteca-api:
+    build: . # build porque queremos construir a imagem a partir do Dockerfile
+    #container_name: biblioteca-api -- quando se usa nginx não se usa porque o docker falha ao criar 1 oum mais container com o mesmo nome
+    restart: unless-stopped
+    depends_on: # Api espere o MySQL iniciar
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+#    ports:
+#      - "8080:8080"
+    expose:
+      - "8080"
+
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME:  ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+
+      #APP_INSTANCE: api-1
+
+    networks:
+      - biblioteca-network
+
+    #profiles: #opcional em projetos pequenos
+     # - app
+
+#  biblioteca-api-2:
+#    build: . # build porque queremos construir a imagem a partir do Dockerfile
+#    container_name: biblioteca-api
+#    restart: unless-stopped
+#    depends_on: # Api espere o MySQL iniciar
+#      mysql:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#    expose:
+#      - "8080:8080"
+#
+#    environment:
+#      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+#      SPRING_DATASOURCE_USERNAME:  ${SPRING_DATASOURCE_USERNAME}
+#      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+#
+#      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+#      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+#
+#      APP_INSTANCE: api-2
+#
+#    networks:
+#      - biblioteca-network
+#
+#      #profiles: #opcional em projetos pequenos
+#      # - app
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: biblioteca-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes # Habilita AOF (Append Only File). para não perder o cache caso houver algum reinicio no serviço
+    volumes:
+      - redis_data:/data
+    networks:
+      - biblioteca-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    #profiles:
+     # - cache
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: biblioteca-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443" # obrigatório para HTTPS
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Mapeia o nginx.conf da raiz do projeto para dentro do container
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      biblioteca-api:
+        condition: service_started
+    networks:
+      - biblioteca-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  biblioteca-network:
