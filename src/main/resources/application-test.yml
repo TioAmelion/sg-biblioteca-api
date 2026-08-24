@@ -21,3 +21,4 @@ spring:
   flyway:
     enabled: true
     schemas: biblioteca
+    default-schema: biblioteca
