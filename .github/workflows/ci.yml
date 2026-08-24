@@ -11,6 +11,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # Cria um container MySQL temporário para os testes para passar no step do test da app
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: biblioteca
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
