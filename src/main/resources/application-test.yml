@@ -22,3 +22,7 @@ spring:
     enabled: true
     schemas: biblioteca
     default-schema: biblioteca
+
+jwt:
+  secret: BibliotecaApi2026DevOpsMinhaChaveSuperSecretaForDevelope
+  expiration: 86400000
