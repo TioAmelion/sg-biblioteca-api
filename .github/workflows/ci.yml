@@ -47,3 +47,6 @@ jobs:
 
       - name: Gerar aplicação
         run: ./mvnw clean package -DskipTests -Dspring.profiles.active=test
+
+      - name: Construir imagem Docker
+        run: docker build -t biblioteca-api:latest . # "-t" define o nome da imagem e "." usa o dir atual
