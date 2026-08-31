@@ -63,10 +63,10 @@ jobs:
       - name: Construir imagem Docker
         # run: docker build -t biblioteca-api:latest . "-t" define o nome da imagem e "." usa o dir atual
         run: |
-          docker build \
-          -t ghcr.io/${{ lowercase(github.repository) }}:latest \
-          .
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/${REPO_LOWER}:latest .
 
       - name: Publicar imagem no GHCR
-        run: | 
-          docker push ghcr.io/${{ lowercase(github.repository) }}:latest
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker push ghcr.io/${REPO_LOWER}:latest
