@@ -72,8 +72,8 @@ jobs:
       - name: Construir imagem Docker
         # run: docker build -t biblioteca-api:latest . "-t" define o nome da imagem e "." usa o dir atual
         run: |
-          docker build -t \
-          ${{env.IMAGE_NAME}}:${{ github.sha }} \ 
+          docker build \
+          -t ${{env.IMAGE_NAME}}:${{ github.sha }} \ 
           .
 
       - name: Publicar imagem no GHCR
