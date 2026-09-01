@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+    tags:
+      - 'v*.*.*'
+
   pull_request:
     branches:
       - main
@@ -60,13 +63,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      #definir var ambiente
+      - name: Definir nome do repositorio em minuscula
+        run: |
+          REPO_LOWER=$(echo "${{github.repository}}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=ghcr.io/${REPO_LOWER}" >> $GITHUB_ENV
+
       - name: Construir imagem Docker
         # run: docker build -t biblioteca-api:latest . "-t" define o nome da imagem e "." usa o dir atual
         run: |
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          docker build -t ghcr.io/${REPO_LOWER}:latest .
+          docker build -t $env.IMAGE_NAME:latest .
 
       - name: Publicar imagem no GHCR
         run: |
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          docker push ghcr.io/${REPO_LOWER}:latest
+          docker push $env.IMAGE_NAME:latest
