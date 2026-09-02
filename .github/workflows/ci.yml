@@ -82,8 +82,8 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
 
           docker tag \
-            $env.IMAGE_NAME:${{ github.sha }} \
-            $env.IMAGE_NAME:$VERSION
+            ${{env.IMAGE_NAME}}:${{ github.sha }} \
+            ${{env.IMAGE_NAME}}:$VERSION
 
           docker tag \
             ${{env.IMAGE_NAME}}:${{ github.sha }} \
